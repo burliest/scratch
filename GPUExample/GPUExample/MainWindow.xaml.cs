@@ -15,6 +15,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace GPUExample
 {
@@ -118,7 +120,8 @@ namespace GPUExample
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-
+            var points = from p in XElement.Load("geocodes.xml").Elements("points")
+                         select p;
         }
 
     }
