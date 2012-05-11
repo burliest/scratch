@@ -7,7 +7,7 @@
         <Label Content="Matches processed by CPU:" Height="28" HorizontalAlignment="Left" Margin="12,46,0,0" Name="label2" VerticalAlignment="Top" />
         <Label Content="Matches processed by GPU:" Height="28" HorizontalAlignment="Left" Margin="12,80,0,0" Name="label3" VerticalAlignment="Top" />
         <Button Content="Run Test" Height="23" HorizontalAlignment="Left" Margin="342,114,0,0" Name="RunButton" VerticalAlignment="Top" Width="75" Click="RunButton_Click" />
-        <Label Content="Waiting to run test" Height="28" Margin="185,12,12,0" Name="StatusLabel" VerticalAlignment="Top" />
+        <Label Content="Loading test data" Height="28" Margin="185,12,12,0" Name="StatusLabel" VerticalAlignment="Top" />
         <Label Content="0" Height="28" Margin="185,46,12,0" Name="CpuLabel" VerticalAlignment="Top" />
         <Label Content="0" Height="28" Margin="185,80,12,0" Name="GpuLabel" VerticalAlignment="Top" />
     </Grid>

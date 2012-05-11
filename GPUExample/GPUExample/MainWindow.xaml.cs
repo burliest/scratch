@@ -25,7 +25,15 @@ namespace GPUExample
     /// </summary>
     public partial class MainWindow : Window
     {
+        struct Geocode
+        {
+            public int id;
+            public float latitude;
+            public float longitude;
+        }
+
         private int secondsPassedCounter = 0;
+        private IList<Geocode> geocodes = new List<Geocode>();
 
         public MainWindow()
         {
@@ -39,13 +47,28 @@ namespace GPUExample
 
         private void RunButton_Click(object sender, RoutedEventArgs e)
         {
-            // Disable the button and enable it 
             this.StatusLabel.Content = "Beginning processing";
             this.RunButton.IsEnabled = false;
 
-            // Load static data
+            #region Fire the GPU thread
 
-            // Fire the CPU thread
+            BackgroundWorker gpuWorker = new BackgroundWorker();
+            gpuWorker.WorkerSupportsCancellation = true;
+            gpuWorker.WorkerReportsProgress = true;
+
+            gpuWorker.DoWork += new DoWorkEventHandler(gpuWork);
+            gpuWorker.ProgressChanged += new ProgressChangedEventHandler(gpuProgressChanged);
+            gpuWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(gpuRunWorkerCompleted);
+
+            if (gpuWorker.IsBusy != true)
+            {
+                gpuWorker.RunWorkerAsync();
+            }
+
+            #endregion
+
+            #region Fire the CPU thread
+
             BackgroundWorker cpuWorker = new BackgroundWorker();
             cpuWorker.WorkerSupportsCancellation = true;
             cpuWorker.WorkerReportsProgress = true;
@@ -59,9 +82,10 @@ namespace GPUExample
                 cpuWorker.RunWorkerAsync();
             }
 
-            // Fire the GPU thread
+            #endregion
 
-            // Start the cancelProcessingTimer
+            #region Start the cancelProcessingTimer
+
             System.Timers.Timer cancelProcessingTimer = new System.Timers.Timer();
             cancelProcessingTimer.Interval = 1000;
             cancelProcessingTimer.Elapsed +=
@@ -73,6 +97,7 @@ namespace GPUExample
                         if (secondsPassedCounter >= 10)
                         {
                             cpuWorker.CancelAsync();
+                            gpuWorker.CancelAsync();
                             this.StatusLabel.Content = String.Format("Processing stopped after {0} seconds", secondsPassedCounter.ToString());
                             this.RunButton.IsEnabled = true;
                             cancelProcessingTimer.Enabled = false;
@@ -85,25 +110,49 @@ namespace GPUExample
                     });
                 };
             cancelProcessingTimer.Enabled = true;
+
+            #endregion
         }
 
         private void cpuWork(object sender, DoWorkEventArgs e)
         {
-            BackgroundWorker worker = sender as BackgroundWorker;
+            int BLOCKSIZE = 5000;
+            int recordcount = 0;
 
-            for (int i = 1; (i <= 30); i++)
+            BackgroundWorker worker = sender as BackgroundWorker;
+            BenchmarkCPU cpu = new BenchmarkCPU();
+
+            float[] latitudes = geocodes.Select(x => x.latitude).ToArray();
+            float[] longitudes = geocodes.Select(x => x.longitude).ToArray();
+
+            for (int i = 0; i < latitudes.Length; i += BLOCKSIZE)
             {
-                if ((worker.CancellationPending == true))
+                for (int j = 0; j < longitudes.Length; j += BLOCKSIZE)
                 {
-                    e.Cancel = true;
-                    worker.ReportProgress(0, i.ToString());
-                    break;
-                }
-                else
-                {
-                    // Perform a time consuming operation and report progress.
-                    System.Threading.Thread.Sleep(500);
-                    worker.ReportProgress(0, i.ToString());
+                    if (worker.CancellationPending)
+                    {
+                        e.Cancel = true;
+                        worker.ReportProgress(0, recordcount.ToString());
+                        break;
+                    }
+                    else
+                    {
+                        // Perform a time consuming operation and report progress.
+                        float[] lat1 = new float[BLOCKSIZE];
+                        float[] long1 = new float[BLOCKSIZE];
+                        float[] lat2 = new float[BLOCKSIZE];
+                        float[] long2 = new float[BLOCKSIZE];
+
+                        Array.Copy(latitudes, i, lat1, 0, BLOCKSIZE);
+                        Array.Copy(longitudes, i, long1, 0, BLOCKSIZE);
+                        Array.Copy(latitudes, j, lat2, 0, BLOCKSIZE);
+                        Array.Copy(longitudes, j, long2, 0, BLOCKSIZE);
+
+                        float[] distances = cpu.CalculateGreaterCircleDistance(lat1, long1, lat2, long2);
+
+                        recordcount += BLOCKSIZE;
+                        worker.ReportProgress(0, recordcount.ToString());
+                    }
                 }
             }
         }
@@ -118,10 +167,73 @@ namespace GPUExample
 
         }
 
+        private void gpuWork(object sender, DoWorkEventArgs e)
+        {
+            int BLOCKSIZE = 5000;
+            int recordcount = 0;
+
+            BackgroundWorker worker = sender as BackgroundWorker;
+            BenchmarkGPU gpu = new BenchmarkGPU();
+
+            float[] latitudes = geocodes.Select(x => x.latitude).ToArray();
+            float[] longitudes = geocodes.Select(x => x.longitude).ToArray();
+
+            for (int i = 0; i < latitudes.Length; i += BLOCKSIZE)
+            {
+                for (int j = 0; j < longitudes.Length; j += BLOCKSIZE)
+                {
+                    if (worker.CancellationPending)
+                    {
+                        e.Cancel = true;
+                        worker.ReportProgress(0, recordcount.ToString());
+                        break;
+                    }
+                    else
+                    {
+                        // Perform a time consuming operation and report progress.
+                        float[] lat1 = new float[BLOCKSIZE];
+                        float[] long1 = new float[BLOCKSIZE];
+                        float[] lat2 = new float[BLOCKSIZE];
+                        float[] long2 = new float[BLOCKSIZE];
+
+                        Array.Copy(latitudes, i, lat1, 0, BLOCKSIZE);
+                        Array.Copy(longitudes, i, long1, 0, BLOCKSIZE);
+                        Array.Copy(latitudes, j, lat2, 0, BLOCKSIZE);
+                        Array.Copy(longitudes, j, long2, 0, BLOCKSIZE);
+
+                        float[] distances = gpu.CalculateGreaterCircleDistance(lat1, long1, lat2, long2);
+
+                        recordcount += BLOCKSIZE;
+                        worker.ReportProgress(0, recordcount.ToString());
+                    }
+                }
+            }
+        }
+
+        private void gpuProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            this.GpuLabel.Content = e.UserState.ToString();
+        }
+
+        private void gpuRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var points = from p in XElement.Load("geocodes.xml").Elements("points")
-                         select p;
+            var filedata =
+                from p in XElement.Load("geocodes.xml").Elements("point")
+                select new Geocode()
+                    {
+                        id = Convert.ToInt32(p.Attribute("id").Value),
+                        latitude = Convert.ToSingle(p.Attribute("lat").Value),
+                        longitude = Convert.ToSingle(p.Attribute("long").Value)
+                    };
+
+            geocodes = filedata.ToList<Geocode>();
+
+            this.StatusLabel.Content = "Waiting to run test";
         }
 
     }

@@ -1,0 +1,16 @@
+C:\src\scratch\GPUExample\GPUExample\bin\Debug\GPUExample.exe
+C:\src\scratch\GPUExample\GPUExample\bin\Debug\GPUExample.pdb
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\MainWindow.baml
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\MainWindow.g.cs
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\App.g.cs
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GPUExample_MarkupCompile.cache
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GPUExample.g.resources
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GPUExample.Properties.Resources.resources
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GenerateResource.read.1.tlog
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GenerateResource.write.1.tlog
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GPUExample.exe
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GPUExample.pdb
+C:\src\scratch\GPUExample\GPUExample\bin\Debug\Microsoft.Accelerator.dll
+C:\src\scratch\GPUExample\GPUExample\bin\Debug\Accelerator.dll
+C:\src\scratch\GPUExample\GPUExample\obj\x86\Debug\GPUExample_Content.g.cs
